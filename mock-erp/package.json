@@ -1,0 +1,20 @@
+{
+  "name": "mock-erp",
+  "version": "1.0.0",
+  "description": "Mock ERP application for the local temporary-access prototype",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0"
+  }
+}

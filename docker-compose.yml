@@ -1,0 +1,69 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - private
+
+  access-gateway:
+    build: ./access-gateway
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+      - mock-erp
+    environment:
+      PORT: 3000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      ACCESS_TTL_SECONDS: 900
+      SESSION_TTL_SECONDS: 1800
+      MAX_ACCESS_ATTEMPTS: 5
+      COOKIE_NAME: erp_session
+      NODE_ENV: development
+      SESSION_SECRET: replace-in-phase-2
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ENABLE_DEV_ENDPOINTS: ${ENABLE_DEV_ENDPOINTS:-false}
+      ERP_UPSTREAM: http://mock-erp:4000
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:3000}
+    networks:
+      - public
+      - private
+
+  telegram-bot:
+    build: ./telegram-bot
+    restart: unless-stopped
+    depends_on:
+      - access-gateway
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_ALLOWED_USER_IDS: ${TELEGRAM_ALLOWED_USER_IDS:-}
+      ACCESS_GATEWAY_INTERNAL_URL: ${ACCESS_GATEWAY_INTERNAL_URL:-http://access-gateway:3000}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      TELEGRAM_POLLING: ${TELEGRAM_POLLING:-true}
+    networks:
+      - public
+      - private
+
+  mock-erp:
+    build: ./mock-erp
+    restart: unless-stopped
+    expose:
+      - "4000"
+    environment:
+      PORT: 4000
+      BASE_PATH: /erp
+    networks:
+      - private
+
+networks:
+  public:
+  private:
+
+volumes:
+  redis-data:
